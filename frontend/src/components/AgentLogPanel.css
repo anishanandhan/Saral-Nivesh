@@ -1,0 +1,327 @@
+/* ─── Agent Trigger Button ────────────────────────────────────────── */
+.agent-trigger-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: all 0.2s;
+}
+
+.agent-trigger-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.agent-trigger-btn .kb-shortcut {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    margin-left: 4px;
+}
+
+/* ─── Agent Log Panel ───────────────────────────────────────────── */
+.agent-panel {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 480px;
+    height: 600px;
+    max-height: calc(100vh - 48px);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow: hidden;
+    backdrop-filter: blur(16px);
+}
+
+@media (max-width: 768px) {
+    .agent-panel {
+        width: calc(100vw - 32px);
+        height: 50vh;
+        bottom: 16px;
+        right: 16px;
+    }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ─── Header ────────────────────────────────────────────────────── */
+.ap-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border);
+}
+
+.ap-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.ap-icon {
+    color: var(--et-orange);
+}
+
+.ap-live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--bullish);
+    background: rgba(0, 212, 170, 0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+}
+
+.pulse {
+    width: 6px;
+    height: 6px;
+    background: var(--bullish);
+    border-radius: 50%;
+    position: relative;
+}
+
+.pulse::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 1px solid var(--bullish);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1.5); opacity: 0; }
+    100% { transform: scale(0.8); opacity: 0; }
+}
+
+.ap-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+/* ─── Stats Bar ─────────────────────────────────────────────────── */
+.ap-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border);
+}
+
+.ap-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-secondary);
+}
+
+/* ─── Body & Log List ───────────────────────────────────────────── */
+.ap-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    position: relative;
+    background: #0f1218; /* Darker background for terminal feel */
+}
+
+.ap-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+.ap-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ap-log-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-left: 20px;
+    position: relative;
+}
+
+/* Left connection line for pipeline visual */
+.ap-log-item::before {
+    content: '';
+    position: absolute;
+    left: -13px;
+    top: 18px;
+    width: 12px;
+    height: 2px;
+    background: var(--border);
+}
+
+.ap-log-list::before {
+    content: '';
+    position: absolute;
+    left: 23px;
+    top: 16px;
+    bottom: 16px;
+    width: 2px;
+    background: var(--border);
+}
+
+/* Status variants */
+.ap-log-item.success { border-left: 3px solid var(--bullish); }
+.ap-log-item.error { border-left: 3px solid var(--bearish); }
+.ap-log-item.running { border-left: 3px solid var(--et-orange); }
+
+.ap-log-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.log-agent {
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+}
+
+.badge-dataharvester { background: rgba(52, 152, 219, 0.2); color: #3498db; border: 1px solid rgba(52, 152, 219, 0.4); }
+.badge-signaldetector { background: rgba(155, 89, 182, 0.2); color: #9b59b6; border: 1px solid rgba(155, 89, 182, 0.4); }
+.badge-contextenricher { background: rgba(241, 196, 15, 0.2); color: #f1c40f; border: 1px solid rgba(241, 196, 15, 0.4); }
+.badge-alertcomposer { background: rgba(230, 126, 34, 0.2); color: #e67e22; border: 1px solid rgba(230, 126, 34, 0.4); }
+.badge-portfoliopersonaliser { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.4); }
+.badge-orchestrator { background: rgba(236, 240, 241, 0.2); color: #ecf0f1; border: 1px solid rgba(236, 240, 241, 0.4); }
+
+.log-action {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.log-time {
+    color: var(--text-tertiary);
+    margin-left: auto;
+    font-size: 0.65rem;
+}
+
+.log-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    margin-bottom: 6px;
+}
+
+.log-meta.confidence {
+    color: var(--et-orange);
+}
+
+.log-details {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-top: 8px;
+    overflow-x: auto;
+}
+
+.log-details pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: inherit;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.log-error {
+    color: var(--bearish);
+    background: rgba(255, 71, 87, 0.1);
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 71, 87, 0.2);
+    margin-top: 8px;
+}

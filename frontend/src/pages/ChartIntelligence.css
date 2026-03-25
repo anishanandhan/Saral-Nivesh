@@ -1,0 +1,389 @@
+/* ─── Charts Page ──────────────────────────────────────────────── */
+.charts-page {
+    padding: 32px 0 60px;
+}
+
+.charts-header {
+    margin-bottom: 24px;
+    opacity: 0;
+}
+
+/* ─── Stock Selector ───────────────────────────────────────────── */
+.stock-selector {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    opacity: 0;
+}
+
+.stock-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.stock-chip {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.stock-chip:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+
+.stock-chip.active {
+    background: var(--et-orange-glow);
+    border-color: var(--et-orange);
+    color: var(--et-orange);
+}
+
+/* ─── Chart Section ────────────────────────────────────────────── */
+.chart-section {
+    margin-bottom: 24px;
+    opacity: 0;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.chart-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.chart-price {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.price-tag {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.price-tag.bullish {
+    background: var(--bullish-bg);
+    color: var(--bullish);
+}
+
+.chart-period-btns {
+    display: flex;
+    gap: 6px;
+}
+
+.chart-live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(0, 212, 170, 0.08);
+    border: 1px solid rgba(0, 212, 170, 0.2);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--bullish);
+    letter-spacing: 1px;
+}
+
+.live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--bullish);
+    animation: pulse 2s ease infinite;
+}
+
+.tradingview-chart {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.chart-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+}
+
+/* ─── Technical Indicators Panel ───────────────────────────────── */
+.tech-panel,
+.backtest-panel,
+.all-patterns-section {
+    margin-bottom: 24px;
+    opacity: 0;
+}
+
+.panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.panel-title svg {
+    color: var(--et-orange);
+}
+
+.indicators-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+}
+
+.indicator-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: center;
+}
+
+.ind-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ind-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.ind-name {
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.ind-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ind-val.big {
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.ind-val.bullish {
+    color: var(--bullish);
+}
+
+.ind-val.bearish {
+    color: var(--bearish);
+}
+
+.ind-val.level {
+    font-size: 0.72rem;
+}
+
+.ind-sub {
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+}
+
+.ind-sub.bullish {
+    color: var(--bullish);
+}
+
+.ind-sub.bearish {
+    color: var(--bearish);
+}
+
+/* ─── RSI Gauge ────────────────────────────────────────────────── */
+.rsi-gauge {
+    width: 80px;
+    margin: 0 auto;
+}
+
+.gauge-svg {
+    width: 100%;
+}
+
+/* ─── Backtest Grid ────────────────────────────────────────────── */
+.backtest-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 12px;
+}
+
+.backtest-card {
+    padding: 16px;
+}
+
+.bt-pattern {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--et-orange);
+    margin-bottom: 6px;
+}
+
+.bt-summary {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.bt-period-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-top: 1px solid var(--border);
+}
+
+.bt-period-label {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.bt-metrics {
+    display: flex;
+    gap: 8px;
+}
+
+.bt-metric {
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.bt-metric.success {
+    background: var(--bullish-bg);
+    color: var(--bullish);
+}
+
+.bt-metric.danger {
+    background: var(--bearish-bg);
+    color: var(--bearish);
+}
+
+.bt-metric.neutral {
+    color: var(--text-secondary);
+}
+
+/* ─── All Patterns List ────────────────────────────────────────── */
+.patterns-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pattern-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+}
+
+.pattern-list-item:hover {
+    border-color: var(--et-orange);
+}
+
+.pli-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pli-stock {
+    font-weight: 700;
+    font-size: 0.85rem;
+    min-width: 100px;
+}
+
+.pli-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pli-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.pli-conf {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.pli-conf.bullish {
+    color: var(--bullish);
+}
+
+.pli-conf.bearish {
+    color: var(--bearish);
+}
+
+/* ─── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .indicators-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .stock-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 768px) {
+    .indicators-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .backtest-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pattern-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}

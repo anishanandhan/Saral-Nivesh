@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+yfinance
+pandas
+numpy
+httpx
+beautifulsoup4
+lxml
+python-dotenv
+openai
+pydantic
+aiohttp
+pyarrow
