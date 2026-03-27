@@ -12,17 +12,20 @@ from typing import Optional
 from data_fetcher import get_stock_data
 from pattern_engine import (
     calculate_rsi, calculate_macd, calculate_sma,
-    RSI_PERIOD, MACD_FAST, MACD_SLOW, MACD_SIGNAL,
-    SMA_SHORT, SMA_LONG,
 )
-from config import BACKTEST_PERIOD
+from config import (
+    BACKTEST_PERIOD, RSI_PERIOD, MACD_FAST, MACD_SLOW,
+    MACD_SIGNAL, SMA_SHORT, SMA_LONG,
+)
 
 
 def backtest_pattern(
     ticker: str,
     pattern_name: str,
-    forward_days: list[int] = [10, 20, 30],
+    forward_days: list[int] | None = None,
 ) -> Optional[dict]:
+    if forward_days is None:
+        forward_days = [10, 20, 30]
     """
     Backtest a specific pattern on a stock over the last 3 years.
     

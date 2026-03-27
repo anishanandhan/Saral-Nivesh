@@ -1,2 +1,31 @@
-.env
+# OS Files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE 
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Python / Backend
+backend/venv311/
+backend/__pycache__/
+backend/**/*.pyc
+backend/.pytest_cache/
 backend/.env
+backend/.env.*
+backend/audit_trail.db
+backend/pip-wheel-metadata/
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.env
+frontend/.env.*
+frontend/.eslintcache
+frontend/npm-debug.log*

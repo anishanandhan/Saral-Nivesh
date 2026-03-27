@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Radar, TrendingUp, MessageSquare, Zap, Menu, X, PlayCircle, BookOpen, LogOut } from 'lucide-react';
+import { Radar, TrendingUp, MessageSquare, Zap, Menu, X, PlayCircle, BookOpen, LogOut, BarChart3 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import './Navbar.css';
@@ -12,28 +12,30 @@ export default function Navbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const links = [
-        { path: '/', label: 'Home', icon: Zap },
+        { path: '/home', label: 'Home', icon: Zap },
         { path: '/radar', label: 'Opportunity Radar', icon: Radar },
         { path: '/charts', label: 'Chart Intelligence', icon: TrendingUp },
-        { path: '/ask', label: 'Ask ET', icon: MessageSquare },
+        { path: '/ask', label: 'AI Co-Pilot', icon: MessageSquare },
+        { path: '/portfolio', label: 'My Portfolio', icon: BarChart3 },
         { path: '/learn', label: 'Learn', icon: BookOpen },
-        { path: '/demo', label: 'Judge Testing', icon: PlayCircle },
     ];
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        navigate('/');
     };
 
     return (
         <nav className="navbar">
             <div className="navbar-inner container">
-                <Link to="/" className="navbar-brand">
-                    <div className="brand-icon">
-                        <Zap size={20} />
-                    </div>
+                <Link to="/home" className="navbar-brand">
+                    <img 
+                        src="/Logo.png" 
+                        alt="Saral Nivesh Logo" 
+                        style={{ height: '110px', width: '200px', borderRadius: '10px',marginRight: '-70px', objectFit: 'contain' }} 
+                    />
                     <div className="brand-text">
-                        <span className="brand-name">Opportunity Radar</span>
+                        <span className="brand-name">Saral Nivesh</span>
                         <span className="brand-sub">by ET Markets</span>
                     </div>
                 </Link>

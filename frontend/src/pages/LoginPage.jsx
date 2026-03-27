@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { LogIn, AlertCircle } from 'lucide-react';
+import { LogIn, AlertCircle, ShieldCheck, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 import './LoginPage.css';
 
 export default function LoginPage() {
@@ -9,69 +10,117 @@ export default function LoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (isLoggedIn) {
-        return <Navigate to="/" replace />;
+        return <Navigate to="/home" replace />;
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        const result = login(username, password);
-        if (!result.success) {
-            setError(result.error);
-        }
+        setIsSubmitting(true);
+        
+        // Add artificial delay for a premium feedback feel
+        setTimeout(() => {
+            const result = login(username, password);
+            if (!result.success) {
+                setError(result.error);
+                setIsSubmitting(false);
+            }
+        }, 800);
     };
 
     return (
-        <div className="login-page">
-            <div className="login-particles">
-                {[...Array(8)].map((_, i) => <div key={i} className="particle" />)}
+        <div className="login-wrapper">
+            {/* Animated Ambient Background */}
+            <div className="ambient-bg">
+                <div className="ambient-blob blob-orange"></div>
+                <div className="ambient-blob blob-teal"></div>
+                <div className="ambient-blob blob-purple"></div>
+                <div className="ambient-grid"></div>
             </div>
-            <div className="login-card">
-                <div className="login-brand">
-                    <div className="login-logo">OR</div>
-                    <div className="login-brand-name">Opportunity Radar</div>
-                    <div className="login-brand-sub">ET AI Investor</div>
+
+            <motion.div 
+                className="login-container"
+                initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.8, cubicBezier: [0.16, 1, 0.3, 1] }}
+            >
+                <div className="login-header">
+                    <motion.img 
+                        src="/Logo.png"
+                        alt="Saral Nivesh Logo"
+                        className="login-main-logo"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.8, delay: 0.2, type: 'spring', stiffness: 200 }}
+                        style={{ width: '1000px', height: '200px', objectFit: 'contain', marginBottom: '-50px', borderRadius: '16px' }}
+                    />
+                    <h1 className="login-title">Saral Nivesh</h1>
+                    <p className="login-subtitle">AI-Powered Financial Intelligence</p>
                 </div>
+
                 <form className="login-form" onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label className="form-label">Username</label>
-                        <input
-                            className="form-input"
-                            type="text"
-                            placeholder="Enter username"
-                            value={username}
-                            onChange={e => setUsername(e.target.value)}
-                            autoFocus
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Password</label>
-                        <input
-                            className="form-input"
-                            type="password"
-                            placeholder="Enter password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                        />
-                    </div>
-                    {error && (
-                        <div className="login-error">
-                            <AlertCircle size={16} />
-                            {error}
+                    <div className="input-group">
+                        <label>Username</label>
+                        <div className="input-wrapper">
+                            <input
+                                type="text"
+                                placeholder="Enter any username"
+                                value={username}
+                                onChange={e => setUsername(e.target.value)}
+                                autoFocus
+                            />
                         </div>
-                    )}
-                    <button type="submit" className="login-btn">
-                        <LogIn size={18} />
-                        Sign In
+                    </div>
+
+                    <div className="input-group">
+                        <label>Password</label>
+                        <div className="input-wrapper">
+                            <input
+                                type="password"
+                                placeholder="Min. 8 characters allowed"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div 
+                                className="error-banner"
+                                initial={{ opacity: 0, height: 0, y: -10 }}
+                                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                                exit={{ opacity: 0, height: 0, y: -10 }}
+                            >
+                                <div className="error-banner-content">
+                                    <AlertCircle size={18} />
+                                    <span>{error}</span>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <button 
+                        type="submit" 
+                        className={`submit-btn ${isSubmitting ? 'loading' : ''}`}
+                        disabled={isSubmitting}
+                    >
+                        <span className="btn-text">
+                            {isSubmitting ? 'Authenticating...' : 'Secure Authorization'}
+                            {!isSubmitting && <LogIn size={18} className="btn-icon" />}
+                        </span>
+                        {isSubmitting && <div className="btn-loader"></div>}
                     </button>
+                    
+                    <div className="secure-badge">
+                        <ShieldCheck size={14} />
+                        <span>Encrypted Session • Any Username Enabled</span>
+                    </div>
                 </form>
-                <div className="login-hint">
-                    <div className="login-hint-label">Demo Credentials</div>
-                    <div className="login-hint-creds">demo / demo123</div>
-                </div>
-            </div>
+            </motion.div>
         </div>
     );
 }

@@ -11,3 +11,5 @@ openai
 pydantic
 aiohttp
 pyarrow
+getstream
+gtts

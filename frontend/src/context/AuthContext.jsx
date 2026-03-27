@@ -2,8 +2,6 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
-const VALID_CREDENTIALS = { username: 'demo', password: 'demo123' };
-
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -17,13 +15,17 @@ export function AuthProvider({ children }) {
     }, []);
 
     const login = (username, password) => {
-        if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
-            const userData = { username, loginTime: new Date().toISOString() };
-            setUser(userData);
-            localStorage.setItem('et_auth_user', JSON.stringify(userData));
-            return { success: true };
+        if (!username.trim()) {
+            return { success: false, error: 'Username cannot be empty.' };
         }
-        return { success: false, error: 'Invalid username or password' };
+        if (password.length < 8) {
+            return { success: false, error: 'Disclaimer: Password must be a minimum of 8 characters.' };
+        }
+
+        const userData = { username, loginTime: new Date().toISOString() };
+        setUser(userData);
+        localStorage.setItem('et_auth_user', JSON.stringify(userData));
+        return { success: true };
     };
 
     const logout = () => {

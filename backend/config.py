@@ -13,6 +13,13 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
+# --- Stream API Configuration ---
+STREAM_API_KEY = os.getenv("STREAM_API_KEY", "")
+STREAM_API_SECRET = os.getenv("STREAM_API_SECRET", "")
+
+# --- ElevenLabs Configuration ---
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
+
 # --- Stock Universe (Nifty 50 core stocks) ---
 NIFTY_50_TICKERS = [
     "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.NS",

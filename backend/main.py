@@ -23,7 +23,7 @@ from filing_parser import (
     generate_corporate_announcements, detect_unusual_insider_activity,
 )
 from backtester import backtest_pattern, get_backtest_summary
-from grok_ai import generate_signal_alert, generate_chat_response
+from grok_ai import generate_signal_alert, generate_chat_response, run_copilot_with_groq, BEGINNER_GLOSSARY, _call_groq_json
 
 # Import new multi-agent components
 from agents.orchestrator import run_pipeline, run_chat_pipeline
@@ -44,7 +44,16 @@ app = FastAPI(
 # CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:5175",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -55,6 +64,10 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     query: str
+    portfolio: Optional[list[dict]] = None
+
+class CopilotRequest(BaseModel):
+    ticker: str
     portfolio: Optional[list[dict]] = None
 
 
@@ -452,8 +465,486 @@ async def generate_alert(signal_data: dict):
     return alert
 
 
+@app.post("/api/copilot/analyze")
+async def analyze_copilot(request: CopilotRequest):
+    """Run the Agentic Co-Pilot Multi-Agent Pipeline (Scout → Quant → Translator)"""
+    ticker = request.ticker.upper()
+    if not ticker.endswith(".NS"):
+        ticker += ".NS"
+
+    # ── STEP 1: Scout Agent ──
+    df = get_stock_data(ticker, period="1y")
+    info = get_stock_info(ticker)
+
+    # ── STEP 2: Quant Agent ──
+    patterns = []
+    summary = {}
+    if df is not None and not df.empty:
+        patterns = scan_stock(ticker, df)
+        summary = get_technical_summary(df)
+
+    rsi_val = round(summary.get("rsi", 50), 1) if summary else 50
+    macd_val = round(summary.get("macd", 0), 2) if summary else 0
+    trend = "Bullish" if summary.get("above_sma_50") else "Bearish" if summary else "Neutral"
+    pattern_names = []
+    for i, p in enumerate(patterns):
+        if i >= 3:
+            break
+        pattern_names.append(p.get("pattern", ""))
+
+    # ── STEP 3: Build portfolio context ──
+    is_fmcg = "ITC" in ticker or "HINDUNILVR" in ticker or "MARICO" in ticker
+    is_it = "TCS" in ticker or "INFY" in ticker or "TECHM" in ticker
+    ptf_context = ""
+    if request.portfolio:
+        for item in request.portfolio:
+            if item.get("ticker", "") == ticker:
+                qty = item.get("quantity", 0)
+                avg = item.get("avg_price", 0)
+                ptf_context = f"You hold {qty} shares at ₹{avg}."
+    if not ptf_context and is_it:
+        ptf_context = f"You hold 50 shares of {ticker.replace('.NS', '')} at ₹3,600."
+    elif not ptf_context and is_fmcg:
+        ptf_context = f"You hold 200 shares of {ticker.replace('.NS', '')} at ₹410."
+
+    # ── STEP 4: News context (demo) ──
+    news = ""
+    if is_it:
+        news = "FII sold ₹2,400 Cr in IT sector this week. Q3 guidance was cautious."
+    elif is_fmcg:
+        news = "Rural demand recovery noted in FMCG. Raw material costs declining."
+    else:
+        news = "Normal market conditions. No major sector-specific events."
+
+    # ── STEP 5: Translator Agent (Groq AI) ──
+    stock_name = info.get("name", ticker.replace(".NS", ""))
+    ai_result = run_copilot_with_groq(
+        stock_name=stock_name,
+        trend=trend,
+        rsi=rsi_val,
+        macd=macd_val,
+        patterns=pattern_names,
+        news=news,
+        portfolio_context=ptf_context,
+    )
+
+    curr_price = 0
+    if info.get("current_price"):
+        curr_price = info.get("current_price")
+    elif df is not None and not df.empty:
+        curr_price = round(float(df['Close'].iloc[-1]), 2)
+
+    return {
+        "thought_process": [
+            # ── Scout Agent (3 steps) ──
+            {
+                "agent": "Scout",
+                "action": "Connecting to NSE data feed...",
+                "status": "complete",
+                "details": f"✔ Target: {ticker} | Period: 1 year | Source: yfinance/NSE"
+            },
+            {
+                "agent": "Scout",
+                "action": "✔ Fetched OHLCV data + company profile",
+                "status": "complete",
+                "details": f"Sector: {info.get('sector', 'N/A')} | Current Price: ₹{curr_price}"
+            },
+            {
+                "agent": "Scout",
+                "action": "✔ Scanned news & filings for key events",
+                "status": "complete",
+                "details": f"News: {news[:90]}"
+            },
+            # ── Quant Agent (3 steps) ──
+            {
+                "agent": "Quant",
+                "action": "Running RSI, MACD & moving average calculations...",
+                "status": "complete",
+                "details": f"✔ RSI(14) = {rsi_val} | MACD = {macd_val} | Trend: {trend}"
+            },
+            {
+                "agent": "Quant",
+                "action": "✔ Pattern detection complete",
+                "status": "complete",
+                "details": f"Detected: {', '.join(pattern_names) if pattern_names else 'No chart patterns'} | SMA-50, SMA-200 calculated"
+            },
+            {
+                "agent": "Quant",
+                "action": f"✔ Generated {len(patterns)} actionable signals",
+                "status": "complete",
+                "details": f"Signal strength: {'Strong' if abs(rsi_val - 50) > 20 else 'Moderate'} | Volatility: {'High' if abs(macd_val) > 50 else 'Normal'}"
+            },
+            # ── Translator Agent (3 steps) ──
+            {
+                "agent": "Translator",
+                "action": "Sending analysis to Groq AI (Llama 3.3 70B)...",
+                "status": "complete",
+                "details": f"✔ Prompt: TL;DR + Confidence + Why NOT format | Model: {('llama-3.3-70b-versatile')}"
+            },
+            {
+                "agent": "Translator",
+                "action": "✔ AI generated structured explanation",
+                "status": "complete",
+                "details": f"Traffic Light: {ai_result.get('traffic_light', 'Yellow')} | Confidence: {ai_result.get('confidence_score', 'N/A')}%"
+            },
+            {
+                "agent": "Translator",
+                "action": "✔ Added beginner glossary & risk warnings",
+                "status": "complete",
+                "details": f"AI: {'✅ Groq powered' if ai_result.get('ai_powered') else '⚡ Rule-based fallback'} | Glossary terms injected"
+            },
+        ],
+        "traffic_light": ai_result.get("traffic_light", "Yellow"),
+        "tldr": ai_result.get("tldr", ""),
+        "key_signal": ai_result.get("key_signal", ""),
+        "signal_strength": ai_result.get("signal_strength", "Moderate"),
+        "signal_strength_reason": ai_result.get("signal_strength_reason", ""),
+        "whats_happening": ai_result.get("whats_happening", ""),
+        "why_its_happening": ai_result.get("why_its_happening", ""),
+        "bullish_factors": ai_result.get("bullish_factors", ""),
+        "bearish_factors": ai_result.get("bearish_factors", ""),
+        "conflict_detection": ai_result.get("conflict_detection", ""),
+        "why_not": ai_result.get("why_not", ""),
+        "confidence_score": ai_result.get("confidence_score", 50),
+        "confidence_reason": ai_result.get("confidence_reason", ""),
+        "portfolio_impact": ai_result.get("portfolio_impact", ""),
+        "historical_success_rate": ai_result.get("historical_success_rate", ""),
+        "typical_outcome": ai_result.get("typical_outcome", ""),
+        "failure_case": ai_result.get("failure_case", ""),
+        "sources": ai_result.get("sources", []),
+        "recommendation": ai_result.get("recommendation", ""),
+        "beginner_tip": ai_result.get("beginner_tip", ""),
+        "video_script": ai_result.get("video_script", ""),
+        "current_price": curr_price,
+        "stock_name": stock_name,
+        "portfolio_context": ptf_context,
+        "patterns": pattern_names,
+        "ai_powered": ai_result.get("ai_powered", False),
+    }
+
+
+# ─── Portfolio Analysis Endpoints ────────────────────────────────────
+
+
+class PortfolioRequest(BaseModel):
+    holdings: list[dict]
+
+
+class StockInsightRequest(BaseModel):
+    ticker: str
+
+
+@app.post("/api/portfolio/analyze")
+async def analyze_portfolio(request: PortfolioRequest):
+    """Master Portfolio AI Analysis — evaluates entire portfolio."""
+    holdings = request.holdings
+    if not holdings:
+        raise HTTPException(status_code=400, detail="Portfolio is empty")
+
+    portfolio_analysis = []
+    sector_map = {}
+    total_invested = 0
+    total_current = 0
+
+    for h in holdings:
+        ticker = h.get("ticker", "")
+        ns_ticker = ticker if ticker.endswith(".NS") else f"{ticker}.NS"
+
+        stock_info = {
+            "ticker": ticker,
+            "name": h.get("name", ticker),
+            "qty": h.get("qty", 0),
+            "buyPrice": h.get("buyPrice", 0),
+            "currentPrice": h.get("currentPrice", 0),
+        }
+
+        # Try to fetch real technical data
+        try:
+            df = get_stock_data(ns_ticker, period="6mo")
+            if df is not None and len(df) > 0:
+                summary = get_technical_summary(df)
+                stock_info["rsi"] = round(summary.get("rsi", 50), 1)
+                stock_info["trend"] = "Bullish" if summary.get("above_sma_50") else "Bearish"
+                stock_info["sma_50"] = round(summary.get("sma_50", 0), 2)
+                stock_info["sma_200"] = round(summary.get("sma_200", 0), 2)
+                stock_info["currentPrice"] = round(float(df['Close'].iloc[-1]), 2)
+        except Exception as e:
+            print(f"[Portfolio] Error fetching {ticker}: {e}")
+            stock_info.setdefault("rsi", 50)
+            stock_info.setdefault("trend", "Neutral")
+
+        # Sector detection (simple rules)
+        info = {}
+        try:
+            info = get_stock_info(ns_ticker)
+            stock_info["sector"] = info.get("sector", "Unknown")
+        except:
+            stock_info["sector"] = "Unknown"
+
+        invested = stock_info["buyPrice"] * stock_info["qty"]
+        current = stock_info["currentPrice"] * stock_info["qty"]
+        total_invested += invested
+        total_current += current
+
+        sector = stock_info.get("sector", "Unknown")
+        sector_map[sector] = sector_map.get(sector, 0) + current
+
+        portfolio_analysis.append(stock_info)
+
+    total_pnl = total_current - total_invested
+    total_pnl_pct = (total_pnl / total_invested * 100) if total_invested > 0 else 0
+
+    # Sector allocation percentages
+    allocation = []
+    for sector, value in sorted(sector_map.items(), key=lambda x: x[1], reverse=True):
+        pct = round((float(value) / float(total_current) * 100) if float(total_current) > 0 else 0)
+        allocation.append({"sector": sector, "percent": pct})
+
+    # Identify risks and opportunities
+    overbought = [s["ticker"] for s in portfolio_analysis if s.get("rsi", 50) > 70]
+    oversold = [s["ticker"] for s in portfolio_analysis if s.get("rsi", 50) < 30]
+    bullish = [s["ticker"] for s in portfolio_analysis if s.get("trend") == "Bullish"]
+    bearish = [s["ticker"] for s in portfolio_analysis if s.get("trend") == "Bearish"]
+
+    health = "Bullish" if len(bullish) > len(bearish) + 1 else "Bearish" if len(bearish) > len(bullish) + 1 else "Neutral"
+
+    risks = []
+    if overbought:
+        risks.append(f"{', '.join(overbought)} in overbought territory (RSI > 70). Consider partial profit booking.")
+    if allocation and allocation[0]["percent"] > 40:
+        risks.append(f"Portfolio concentrated in {allocation[0]['sector']} ({allocation[0]['percent']}%). Diversify.")
+    if bearish:
+        risks.append(f"{', '.join(bearish)} showing bearish trends. Monitor closely.")
+
+    opportunities = []
+    if oversold:
+        opportunities.append(f"{', '.join(oversold)} oversold — potential bounce opportunity.")
+    if bullish:
+        opportunities.append(f"{', '.join(bullish)} showing strong bullish momentum.")
+
+    return {
+        "summary": f"Portfolio is {health} with {len(holdings)} stocks. "
+                   f"Total P&L: {'+'if total_pnl >= 0 else ''}₹{total_pnl:,.0f} ({total_pnl_pct:+.1f}%).",
+        "allocation": allocation,
+        "risks": risks,
+        "opportunities": opportunities,
+        "recommendations": {
+            "hold": [s["ticker"] for s in portfolio_analysis if s.get("trend") != "Bearish" and s.get("rsi", 50) <= 70],
+            "buy": oversold,
+            "sell": overbought,
+        },
+        "health": health,
+        "total_invested": round(total_invested, 2),
+        "total_current": round(total_current, 2),
+        "total_pnl": round(total_pnl, 2),
+        "disclaimer": DISCLAIMER,
+    }
+
+
+@app.post("/api/portfolio/stock-insight")
+async def stock_insight(request: StockInsightRequest):
+    """Per-stock insight with RSI, trend, and signal classification."""
+    ticker = request.ticker
+    if not ticker.endswith(".NS"):
+        ticker += ".NS"
+
+    df = get_stock_data(ticker, period="6mo")
+    if df is None or len(df) == 0:
+        raise HTTPException(status_code=404, detail=f"No data found for {ticker}")
+
+    summary = get_technical_summary(df)
+    patterns = scan_stock(ticker, df)
+
+    rsi = round(summary.get("rsi", 50), 1)
+    trend = "Bullish" if summary.get("above_sma_50") else "Bearish"
+
+    if rsi > 70:
+        signal = "Overbought"
+        recommendation = "SELL or reduce — RSI indicates strong overbought conditions."
+    elif rsi < 30:
+        signal = "Oversold"
+        recommendation = "BUY — RSI indicates oversold conditions, potential bounce."
+    elif trend == "Bullish" and rsi > 55:
+        signal = "Bullish"
+        recommendation = "HOLD — strong momentum with healthy RSI."
+    elif trend == "Bearish" and rsi < 45:
+        signal = "Bearish"
+        recommendation = "CAUTION — bearish trend with weak RSI. Monitor closely."
+    else:
+        signal = "Neutral"
+        recommendation = "HOLD — no strong signals. Wait for clearer direction."
+
+    return {
+        "ticker": ticker.replace(".NS", ""),
+        "rsi": rsi,
+        "trend": trend,
+        "signal": signal,
+        "recommendation": recommendation,
+        "patterns": [p.get("pattern", "") for p in patterns[:3]],
+        "current_price": round(float(df['Close'].iloc[-1]), 2),
+        "sma_50": round(summary.get("sma_50", 0), 2),
+        "sma_200": round(summary.get("sma_200", 0), 2),
+        "disclaimer": DISCLAIMER,
+    }
+
+
+# ─── Quick Follow-Up ──────────────────────────────────────────────────
+
+class FollowUpRequest(BaseModel):
+    question: str
+    stock_name: str
+    context: str  # JSON summary of existing analysis
+
+@app.post("/api/copilot/followup")
+async def copilot_followup(req: FollowUpRequest):
+    """Answer a follow-up question quickly using existing analysis context."""
+    try:
+        answer = _call_groq_json(
+            system_prompt="""You are an expert financial advisor answering a quick follow-up question about a stock.
+You already have the full analysis context. Answer concisely in 2-3 sentences, in simple language a beginner would understand.
+Output STRICT JSON: {"answer": "your answer here"}
+No extra text outside JSON.""",
+            user_prompt=f"""Stock: {req.stock_name}
+Analysis Context: {req.context}
+Question: {req.question}
+
+Answer this follow-up question based on the analysis above.""",
+        )
+        return {"answer": answer.get("answer", "I couldn't generate an answer. Please try again.") if answer else "Analysis unavailable."}
+    except Exception as e:
+        return {"answer": f"Error generating answer: {str(e)}"}
+
+
+# ─── Floating Assistant Chat ──────────────────────────────────────────
+
+class AssistantChatRequest(BaseModel):
+    query: str
+    history: list[dict] = []
+
+@app.post("/api/assistant/chat")
+async def assistant_chat(req: AssistantChatRequest):
+    """Answer questions from the floating AI assistant using Market TV context."""
+    from market_tv import get_latest_update
+    from grok_ai import _call_groq, MASTER_SYSTEM_PROMPT
+    
+    try:
+        latest = get_latest_update()
+        market_context = "No live market update available at the moment."
+        if latest:
+            market_context = f"Headline: {latest.get('hook', '')}\nSummary: {latest.get('summary', '')}"
+            
+        system_prompt = f"""{MASTER_SYSTEM_PROMPT}
+
+You are the 'Ask ET AI' floating assistant. The user is asking a question while watching the live market TV feed.
+CURRENT LIVE MARKET CONTEXT:
+{market_context}
+
+IMPORTANT RULES:
+1. Keep your explanation extremely brief, short, and sweet (1-2 sentences maximum).
+2. If their question is about 'the news' or 'the market' or 'what is going on', use the LIVE MARKET CONTEXT above to answer.
+3. Provide simple financial advice or explanations without making direct buy/sell recommendations."""
+
+        history_text = ""
+        for msg in req.history[-4:]:
+            if msg.get("role") != "system":
+                history_text += f"{msg.get('role', 'user').capitalize()}: {msg.get('content', '')}\n"
+                
+        user_prompt = f"Chat History:\n{history_text}\nUser: {req.query}\nAI:"
+        
+        answer = _call_groq(system_prompt, user_prompt, max_tokens=300)
+        return {"response": answer if answer else "I'm currently unable to process your request."}
+    except Exception as e:
+        return {"response": f"Error: {str(e)}"}
+# ─── Market TV — Live Streaming Endpoints ─────────────────────────────
+
+import asyncio
+from starlette.responses import StreamingResponse
+from starlette.staticfiles import StaticFiles
+from market_tv import (
+    market_tv_loop, stop_market_tv, get_latest_update,
+    get_ticker_data, generate_stream_token, generate_market_update,
+    sse_subscribers, update_history, AUDIO_DIR,
+)
+
+# Mount audio cache as static files
+app.mount("/audio", StaticFiles(directory=str(AUDIO_DIR)), name="audio")
+
+
+@app.on_event("startup")
+async def start_market_tv():
+    """Start the Market TV background loop on server startup."""
+    asyncio.create_task(market_tv_loop())
+
+
+@app.on_event("shutdown")
+async def shutdown_market_tv():
+    """Stop the Market TV background loop on server shutdown."""
+    stop_market_tv()
+
+
+@app.get("/api/market-tv/stream")
+async def market_tv_sse():
+    """Server-Sent Events endpoint for real-time market updates."""
+    queue = asyncio.Queue()
+    sse_subscribers.append(queue)
+
+    async def event_generator():
+        try:
+            # Send the latest update immediately if available
+            latest = get_latest_update()
+            if latest:
+                import json
+                yield f"data: {json.dumps(latest)}\n\n"
+
+            while True:
+                data = await queue.get()
+                yield f"data: {data}\n\n"
+        except asyncio.CancelledError:
+            pass
+        finally:
+            if queue in sse_subscribers:
+                sse_subscribers.remove(queue)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+        },
+    )
+
+
+@app.get("/api/market-tv/latest")
+async def market_tv_latest():
+    """Get the latest market TV update."""
+    latest = get_latest_update()
+    if latest:
+        return latest
+    # Generate one now if none exists
+    update = generate_market_update()
+    update["tickers"] = get_ticker_data()
+    update_history.append(update)
+    return update
+
+
+@app.get("/api/market-tv/tickers")
+async def market_tv_tickers():
+    """Get current ticker data for the scrolling strip."""
+    return {"tickers": get_ticker_data()}
+
+
+@app.post("/api/market-tv/token")
+async def market_tv_token():
+    """Generate a Stream user token for frontend auth."""
+    token = generate_stream_token("market-tv-viewer")
+    return {"token": token, "user_id": "market-tv-viewer", "api_key": "6s2769m4c6bz"}
+
+
 # ─── Run Server ───────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+

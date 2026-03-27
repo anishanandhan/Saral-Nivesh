@@ -1,0 +1,145 @@
+/* ─────────────────────────────────────────────────────────────────
+   Global Animations — imported in index.css or App.jsx
+   ───────────────────────────────────────────────────────────────── */
+
+/* ─── Floating Glow Blobs (premium fintech) ─────────────────────── */
+.glow-blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 0;
+    will-change: transform;
+}
+
+.blob-1 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, #6c5ce7, transparent 70%);
+    top: -100px; left: -200px;
+    animation: blobFloat1 20s ease-in-out infinite alternate;
+}
+.blob-2 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, #00d4aa, transparent 70%);
+    bottom: 20%; right: -150px;
+    animation: blobFloat2 25s ease-in-out infinite alternate;
+}
+.blob-3 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, #f7931a, transparent 70%);
+    top: 60%; left: 30%;
+    animation: blobFloat3 22s ease-in-out infinite alternate;
+}
+
+@keyframes blobFloat1 { from { transform: translate(0,0) scale(1); } to { transform: translate(80px,60px) scale(1.15); } }
+@keyframes blobFloat2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-60px,-40px) scale(1.1); } }
+@keyframes blobFloat3 { from { transform: translate(0,0) scale(1); } to { transform: translate(40px,-50px) scale(1.2); } }
+
+/* ─── Global Micro-Interactions ─────────────────────────────────── */
+/* CTA Pulse */
+.cta-pulse {
+    animation: ctaPulse 4s ease-in-out infinite;
+}
+@keyframes ctaPulse {
+    0%, 85%, 100% { box-shadow: 0 4px 16px rgba(247, 147, 26, 0.2); }
+    92% { box-shadow: 0 4px 24px rgba(247, 147, 26, 0.45); }
+}
+
+/* Card Lift on Hover */
+.card-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card-lift:hover { transform: translateY(-5px); box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+
+/* Glow Borders */
+.glow-green { box-shadow: 0 0 15px rgba(0, 212, 170, 0.15); border-color: rgba(0, 212, 170, 0.3) !important; }
+.glow-red { box-shadow: 0 0 15px rgba(255, 71, 87, 0.15); border-color: rgba(255, 71, 87, 0.3) !important; }
+.glow-yellow { box-shadow: 0 0 15px rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3) !important; }
+.glow-purple { box-shadow: 0 0 15px rgba(108, 92, 231, 0.15); border-color: rgba(108, 92, 231, 0.3) !important; }
+
+/* Signal Pulse Dot */
+.pulse-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    animation: pulseDot 2s ease-in-out infinite;
+}
+.pulse-dot.green { background: var(--bullish); box-shadow: 0 0 10px rgba(0, 212, 170, 0.5); }
+.pulse-dot.red { background: var(--bearish); box-shadow: 0 0 10px rgba(255, 71, 87, 0.5); }
+.pulse-dot.yellow { background: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+.pulse-dot.purple { background: #6c5ce7; box-shadow: 0 0 10px rgba(108, 92, 231, 0.5); }
+
+@keyframes pulseDot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+}
+
+/* Shimmer Effect */
+.shimmer {
+    position: relative;
+    overflow: hidden;
+}
+.shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+    animation: shimmerSlide 3s ease-in-out infinite;
+}
+@keyframes shimmerSlide {
+    0% { left: -60%; }
+    100% { left: 160%; }
+}
+
+/* Icon Bounce */
+.icon-bounce { animation: iconBounce 2s ease-in-out infinite; }
+@keyframes iconBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+/* Warning Icon Pulse */
+.warn-pulse { animation: warnPulse 2.5s ease-in-out infinite; }
+@keyframes warnPulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Live Blink */
+.live-blink { animation: liveBlink 1.5s ease-in-out infinite; }
+@keyframes liveBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Progress Bar Fill */
+@keyframes fillBar {
+    from { width: 0; }
+}
+
+/* Confidence Bar Glow Edge */
+.conf-bar-fill {
+    position: relative;
+}
+.conf-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 8px;
+    border-radius: 50%;
+    background: inherit;
+    filter: blur(4px);
+    opacity: 0.6;
+}
+
+/* ─── Mobile Performance ────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .glow-blob { opacity: 0.03 !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001s !important;
+        transition-duration: 0.001s !important;
+    }
+    .glow-blob { display: none !important; }
+}
