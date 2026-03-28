@@ -29,3 +29,5 @@ frontend/.env
 frontend/.env.*
 frontend/.eslintcache
 frontend/npm-debug.log*
+backend/cache/
+backend/audio_cache/

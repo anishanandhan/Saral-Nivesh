@@ -1,5 +1,5 @@
 .ticker {
-  background: var(--bg2);
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border);
   height: 28px;
   overflow: hidden;
@@ -8,9 +8,6 @@
   position: sticky;
   top: 0;
   z-index: 101;
-  /* Premium edge fade */
-  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
 }
 
 .ticker-track {
@@ -19,6 +16,10 @@
   animation: tick 30s linear infinite;
   padding-left: 100%;
   white-space: nowrap;
+  width: 100%;
+  /* Premium edge fade applied strictly to track so background stays solid */
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
 }
 
 .ticker-track:hover {

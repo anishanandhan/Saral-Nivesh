@@ -488,7 +488,7 @@ export default function Landing() {
                         </motion.div>
 
                         <motion.div className="hero-trust" variants={fadeUp}>
-                            Built for Indian retail investors • NSE/BSE ready • Groq AI powered
+                            Built for Indian retail investors • NSE/BSE ready 
                         </motion.div>
                     </motion.div>
                 </div>

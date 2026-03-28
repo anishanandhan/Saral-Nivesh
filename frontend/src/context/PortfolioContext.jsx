@@ -2,8 +2,10 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 
 const PortfolioContext = createContext(null);
 
-// ─── Mock Current Prices (Demo Prototype) ────────────────────────────
-const MOCK_PRICES = {
+const API_BASE = 'http://localhost:8000';
+
+// ─── Fallback Prices (used when backend is unavailable) ──────────────
+const FALLBACK_PRICES = {
     'RELIANCE': { price: 2945.50, sector: 'Energy', rsi: 58, trend: 'Bullish' },
     'TCS': { price: 3842.75, sector: 'IT', rsi: 72, trend: 'Bullish' },
     'HDFCBANK': { price: 1678.30, sector: 'Banking', rsi: 45, trend: 'Neutral' },
@@ -33,6 +35,19 @@ const MOCK_PRICES = {
     'ULTRACEMCO': { price: 11234.50, sector: 'Cement', rsi: 54, trend: 'Neutral' },
 };
 
+// Sector map for tickers (used when backend doesn't return sector)
+const SECTOR_MAP = {
+    'RELIANCE': 'Energy', 'TCS': 'IT', 'HDFCBANK': 'Banking', 'INFY': 'IT',
+    'ICICIBANK': 'Banking', 'HINDUNILVR': 'FMCG', 'ITC': 'FMCG', 'SBIN': 'Banking',
+    'BHARTIARTL': 'Telecom', 'KOTAKBANK': 'Banking', 'LT': 'Infrastructure',
+    'AXISBANK': 'Banking', 'ASIANPAINT': 'Consumer', 'MARUTI': 'Auto',
+    'TITAN': 'Consumer', 'SUNPHARMA': 'Pharma', 'BAJFINANCE': 'NBFC',
+    'WIPRO': 'IT', 'TATAMOTORS': 'Auto', 'TATASTEEL': 'Metals',
+    'HCLTECH': 'IT', 'NTPC': 'Power', 'ONGC': 'Energy',
+    'POWERGRID': 'Power', 'COALINDIA': 'Mining', 'ADANIENT': 'Conglomerate',
+    'ULTRACEMCO': 'Cement',
+};
+
 // ─── Default demo portfolio for first-time users ────────────────────
 const DEFAULT_PORTFOLIO = [
     { ticker: 'TCS', name: 'Tata Consultancy Services', qty: 10, buyPrice: 3400, addedAt: '2026-02-10' },
@@ -45,8 +60,10 @@ const DEFAULT_PORTFOLIO = [
 
 const STORAGE_KEY = 'et_portfolio_holdings';
 
-function getStockData(ticker) {
-    return MOCK_PRICES[ticker] || { price: 0, sector: 'Unknown', rsi: 50, trend: 'Neutral' };
+function getStockData(ticker, livePrices) {
+    const live = livePrices[ticker];
+    if (live) return live;
+    return FALLBACK_PRICES[ticker] || { price: 0, sector: 'Unknown', rsi: 50, trend: 'Neutral' };
 }
 
 function getSignal(rsi) {
@@ -65,6 +82,76 @@ export function PortfolioProvider({ children }) {
         } catch { /* ignore */ }
         return DEFAULT_PORTFOLIO;
     });
+
+    const [livePrices, setLivePrices] = useState(FALLBACK_PRICES);
+
+    // ─── Fetch live prices from backend on mount ────────────────────
+    useEffect(() => {
+        async function fetchLivePrices() {
+            try {
+                // Get all unique tickers from holdings + common defaults
+                const allTickers = [...new Set([
+                    ...holdings.map(h => h.ticker),
+                    ...Object.keys(FALLBACK_PRICES),
+                ])];
+
+                const tickerStr = allTickers.map(t => t.endsWith('.NS') ? t : `${t}.NS`).join(',');
+                const priceRes = await fetch(`${API_BASE}/api/stocks/prices?tickers=${tickerStr}`);
+                const priceData = await priceRes.json();
+
+                const updatedPrices = { ...FALLBACK_PRICES };
+
+                // Update prices from the batch price endpoint
+                if (priceData.prices) {
+                    for (const p of priceData.prices) {
+                        const clean = p.ticker?.replace('.NS', '') || p.name;
+                        if (clean && p.price) {
+                            updatedPrices[clean] = {
+                                ...updatedPrices[clean],
+                                price: p.price,
+                                sector: SECTOR_MAP[clean] || updatedPrices[clean]?.sector || 'Unknown',
+                            };
+                        }
+                    }
+                }
+
+                // Fetch real-time technical data (RSI, trend) for portfolio holdings
+                const techPromises = holdings.map(async (h) => {
+                    try {
+                        const res = await fetch(`${API_BASE}/api/stocks/${h.ticker}/technical`);
+                        if (!res.ok) return null;
+                        const tech = await res.json();
+                        return { ticker: h.ticker, tech };
+                    } catch {
+                        return null;
+                    }
+                });
+
+                const techResults = await Promise.all(techPromises);
+                for (const result of techResults) {
+                    if (!result || !result.tech) continue;
+                    const t = result.ticker;
+                    const tech = result.tech;
+                    const rsi = tech.rsi ? Math.round(tech.rsi) : updatedPrices[t]?.rsi || 50;
+                    const trend = rsi >= 55 ? 'Bullish' : rsi <= 45 ? 'Bearish' : 'Neutral';
+                    updatedPrices[t] = {
+                        ...updatedPrices[t],
+                        price: tech.current_price || updatedPrices[t]?.price || 0,
+                        rsi,
+                        trend,
+                        sector: SECTOR_MAP[t] || updatedPrices[t]?.sector || 'Unknown',
+                    };
+                }
+
+                setLivePrices(updatedPrices);
+                console.log('[Portfolio] Live prices loaded from backend');
+            } catch (err) {
+                console.warn('[Portfolio] Backend unavailable, using fallback prices:', err.message);
+            }
+        }
+
+        fetchLivePrices();
+    }, [holdings.length]); // Re-fetch when stocks are added/removed
 
     // Persist to localStorage
     useEffect(() => {
@@ -109,7 +196,7 @@ export function PortfolioProvider({ children }) {
 
     // ─── Computed Values ─────────────────────────────────────────
     const enrichedHoldings = holdings.map(h => {
-        const data = getStockData(h.ticker);
+        const data = getStockData(h.ticker, livePrices);
         const currentValue = data.price * h.qty;
         const invested = h.buyPrice * h.qty;
         const pnl = currentValue - invested;
@@ -173,7 +260,7 @@ export function PortfolioProvider({ children }) {
             portfolioHealth,
             confidenceScore,
             avgRsi,
-            mockPrices: MOCK_PRICES,
+            mockPrices: livePrices,
         }}>
             {children}
         </PortfolioContext.Provider>

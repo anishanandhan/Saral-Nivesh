@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './TickerTape.css';
 import { Link } from 'react-router-dom';
 
-const TICKERS = [
+const DEFAULT_TICKERS = [
   { s: 'RELIANCE', p: '2,847.30', c: '+1.24%', up: true },
   { s: 'HDFCBANK', p: '1,623.45', c: '+0.87%', up: true },
   { s: 'INFY', p: '1,892.10', c: '-0.43%', up: false },
@@ -19,14 +19,51 @@ const TICKERS = [
   { s: 'POWERGRID', p: '312.40', c: '+0.55%', up: true }
 ];
 
-// Double the array to ensure smooth continuous scrolling
-const TICKER_DISPLAY_LIST = [...TICKERS, ...TICKERS, ...TICKERS];
-
 export default function TickerTape() {
+  const [tickers, setTickers] = useState(DEFAULT_TICKERS);
+
+  useEffect(() => {
+    async function fetchLivePrices() {
+      try {
+        const res = await fetch('http://localhost:8000/api/stocks/prices');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.prices && data.prices.length > 0) {
+            // Map the API response dictionary into the structure our ticker needs
+            const liveMap = {};
+            data.prices.forEach(p => {
+              const symbol = p.ticker.replace('.NS', '');
+              liveMap[symbol] = {
+                p: p.price.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+                c: (p.change_pct >= 0 ? '+' : '') + p.change_pct.toFixed(2) + '%',
+                up: p.change_pct >= 0
+              };
+            });
+
+            // Update the default tickers with live prices
+            setTickers(prev => prev.map(t => {
+              if (liveMap[t.s]) {
+                return { ...t, ...liveMap[t.s] };
+              }
+              return t;
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn('[TickerTape] Failed to fetch live prices, using fallback data.');
+      }
+    }
+    
+    fetchLivePrices();
+  }, []);
+
+  // Double the array to ensure smooth continuous scrolling
+  const displayList = [...tickers, ...tickers, ...tickers];
+
   return (
     <div className="ticker">
       <div className="ticker-track">
-        {TICKER_DISPLAY_LIST.map((t, i) => {
+        {displayList.map((t, i) => {
             const content = (
                 <div className="ti">
                   <span className="ti-s">{t.s}</span>

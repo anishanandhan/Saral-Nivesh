@@ -59,6 +59,18 @@ function explainLine(line) {
     return 'This is an AI-generated insight based on technical and fundamental analysis of the stock.';
 }
 
+export function cleanText(text) {
+    if (!text || typeof text !== 'string') return text;
+    const bs = "**Beginner's Glossary**";
+    const embs = "📚 **Beginner's Glossary**";
+    const idx1 = text.indexOf(bs);
+    const idx2 = text.indexOf(embs);
+    const idx = idx2 !== -1 ? idx2 : idx1;
+    let cleaned = idx !== -1 ? text.substring(0, idx) : text;
+    cleaned = cleaned.replace(/\*\*/g, '').replace(/\*/g, '').replace(/📚\s*$/g, '').trim();
+    return cleaned;
+}
+
 export default function AskET() {
     const [ticker, setTicker] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -98,7 +110,16 @@ export default function AskET() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ticker: searchTicker.trim(), portfolio: [] }),
             });
-            const data = await res.json();
+            const rawData = await res.json();
+            
+            const data = { ...rawData };
+            const textFields = ['tldr', 'key_signal', 'signal_strength_reason', 'whats_happening', 
+                'why_its_happening', 'bullish_factors', 'bearish_factors', 'conflict_detection',
+                'why_not', 'confidence_reason', 'portfolio_impact', 'recommendation', 'beginner_tip'];
+            textFields.forEach(f => {
+                if (data[f]) data[f] = cleanText(data[f]);
+            });
+
             const tp = data.thought_process || [];
             for (let i = 0; i < tp.length; i++) {
                 await new Promise(r => setTimeout(r, 450));
@@ -524,7 +545,7 @@ export default function AskET() {
                                                             body: JSON.stringify({ question: btn.q, stock_name: result.stock_name, context: ctx }),
                                                         });
                                                         const data = await res.json();
-                                                        setFollowUpAnswer(data.answer || 'No answer received.');
+                                                        setFollowUpAnswer(data.answer ? cleanText(data.answer) : 'No answer received.');
                                                     } catch {
                                                         setFollowUpAnswer('Failed to get answer. Check backend.');
                                                     }
@@ -704,15 +725,15 @@ export default function AskET() {
 
                                             {/* Header */}
                                             <div className="vp-header">
-                                                <div className="card-label video-label"><Video size={14} /> 🎥 AI Market Video</div>
+                                                <div className="card-label video-label"><Video size={14} /> 🎥  Market Explaination</div>
                                                 <div className="vp-controls">
                                                     <motion.button
                                                         className={`vp-mode-btn ${reelMode ? 'active' : ''}`}
                                                         onClick={() => { setReelMode(!reelMode); stopPlay(); }}
                                                         whileTap={{ scale: 0.95 }}
-                                                        title={reelMode ? 'Detailed Mode' : 'Reel Mode'}
+                                                        title={reelMode ? 'Detailed Mode' : 'Short Mode'}
                                                     >
-                                                        <Clapperboard size={13} /> {reelMode ? 'Detailed' : 'Reel'}
+                                                        <Clapperboard size={13} /> {reelMode ? 'Detailed' : 'Short'}
                                                     </motion.button>
                                                     <div className="vp-speed">
                                                         {[1, 1.5, 2].map(s => (
@@ -735,7 +756,7 @@ export default function AskET() {
                                                         whileHover={{ scale: 1.06, boxShadow: '0 0 20px rgba(139,92,246,0.3)' }}
                                                         whileTap={{ scale: 0.94 }}
                                                     >
-                                                        <Play size={16} /> {videoScene >= 0 ? 'Replay' : 'Play Video'}
+                                                        <Play size={16} /> {videoScene >= 0 ? 'Replay' : 'Play'}
                                                     </motion.button>
                                                 ) : (
                                                     <motion.button

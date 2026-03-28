@@ -131,22 +131,8 @@ def _call_groq_json(system_prompt: str, user_prompt: str) -> Optional[dict]:
 
 def _add_glossary_to_response(text: str) -> str:
     """Append relevant glossary terms found in the response."""
-    found_terms: list[tuple[str, str]] = []
-    text_upper = text.upper()
-    for term, explanation in BEGINNER_GLOSSARY.items():
-        if term.upper() in text_upper and term not in [t[0] for t in found_terms]:
-            found_terms.append((term, explanation))
-
-    if not found_terms:
-        return text
-
-    glossary_section = "\n\n📚 **Beginner's Glossary** (terms used above):\n"
-    for i, (term, explanation) in enumerate(found_terms):
-        if i >= 5:  # Max 5 terms
-            break
-        glossary_section += f"- **{term}**: {explanation}\n"
-
-    return text + glossary_section
+    # Disabled by user request: Do not append raw markdown glossary lists
+    return text
 
 
 # ─── PROMPT 2: Stock Explanation ─────────────────────────────────────

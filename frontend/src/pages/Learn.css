@@ -67,9 +67,9 @@
 .learning-path {
     display: flex;
     justify-content: center;
-    gap: 0;
+    gap: 24px;
     flex-wrap: wrap;
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -77,13 +77,15 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 20px;
+    padding: 14px 18px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
+    flex: 1;
+    min-width: 240px;
 }
 
 .path-step:hover {
@@ -119,10 +121,10 @@
 
 .path-connector {
     position: absolute;
-    right: -18px;
+    right: -24px;
     top: 50%;
     transform: translateY(-50%);
-    width: 16px;
+    width: 24px;
     height: 2px;
     background: var(--border);
     z-index: 1;

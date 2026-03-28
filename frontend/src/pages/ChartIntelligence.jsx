@@ -272,8 +272,8 @@ export default function ChartIntelligence() {
                                         <div key={period} className="bt-period-row">
                                             <span className="bt-period-label">{period.replace('_', ' ')}</span>
                                             <div className="bt-metrics">
-                                                <span className={`bt-metric ${res.win_rate >= 60 ? 'success' : 'neutral'}`}>{res.win_rate}% win rate</span>
-                                                <span className={`bt-metric ${res.avg_return >= 0 ? 'success' : 'danger'}`}>{res.avg_return > 0 ? '+' : ''}{res.avg_return}% avg</span>
+                                                <span className={`bt-metric ${res.win_rate >= 60 ? 'success' : 'neutral'}`}>{(res.win_rate || 0).toFixed(1)}% win rate</span>
+                                                <span className={`bt-metric ${res.avg_return >= 0 ? 'success' : 'danger'}`}>{res.avg_return > 0 ? '+' : ''}{(res.avg_return || 0).toFixed(2)}% avg</span>
                                                 <span className="bt-metric neutral">{res.sample_size} trades</span>
                                             </div>
                                         </div>
@@ -313,7 +313,7 @@ export default function ChartIntelligence() {
                                     </div>
                                     <div className="pli-right">
                                         <span className="pli-price">₹{p.current_price?.toLocaleString('en-IN')}</span>
-                                        <span className={`pli-conf ${p.signal}`}>{p.confidence}%</span>
+                                        <span className={`pli-conf ${p.signal}`}>{(p.confidence || 0).toFixed(1)}%</span>
                                     </div>
                                 </motion.div>
                             ))}

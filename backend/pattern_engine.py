@@ -432,7 +432,12 @@ def scan_all_stocks(stock_data: dict[str, pd.DataFrame]) -> list[dict]:
         signals = scan_stock(ticker, df)
         all_signals.extend(signals)
 
-    return sorted(all_signals, key=lambda x: x.get("confidence", 0), reverse=True)
+    sorted_signals = sorted(all_signals, key=lambda x: x.get("confidence", 0), reverse=True)
+    for sig in sorted_signals:
+        if "confidence" in sig:
+            sig["confidence"] = round(float(sig["confidence"]), 1)
+    
+    return sorted_signals
 
 
 def get_technical_summary(df: pd.DataFrame) -> dict:
@@ -449,6 +454,16 @@ def get_technical_summary(df: pd.DataFrame) -> dict:
 
     current_price = float(df["Close"].iloc[-1])
 
+    # 52w High / Low (approx 252 trading days)
+    lookback = min(252, len(df))
+    high52 = float(df["High"].tail(lookback).max())
+    low52 = float(df["Low"].tail(lookback).min())
+
+    # Vol vs Average (20 day average)
+    vol_current = float(df["Volume"].iloc[-1])
+    vol_avg = float(df["Volume"].tail(20).mean())
+    vol_ratio = round(vol_current / vol_avg, 2) if vol_avg > 0 else 1.0
+
     return {
         "rsi": round(float(rsi.iloc[-1]), 2) if not rsi.isna().all() else None,
         "macd": round(float(macd_line.iloc[-1]), 3) if not macd_line.isna().all() else None,
@@ -463,4 +478,7 @@ def get_technical_summary(df: pd.DataFrame) -> dict:
         "current_price": round(current_price, 2),
         "above_sma_50": current_price > float(sma_50.iloc[-1]) if not sma_50.isna().all() else None,
         "above_sma_200": current_price > float(sma_200.iloc[-1]) if not sma_200.isna().all() else None,
+        "high52": round(high52, 2),
+        "low52": round(low52, 2),
+        "volRatio": vol_ratio,
     }
